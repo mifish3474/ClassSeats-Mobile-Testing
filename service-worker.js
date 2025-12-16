@@ -1,4 +1,4 @@
-const BUILD_REV = '925a34a22f100aee6b46be958427822ded813994'
+const BUILD_REV = '80c9c493522d495870b7c6e13bb4f300d97d7c5d'
 const CACHE_NAME = `classseats-pwa-${BUILD_REV}`
 const CORE_ASSETS = [
   './',
@@ -21,6 +21,18 @@ const isGoogleRequest = (url) => {
 const isCloudFunction = (url) => {
   return url.includes('classseats-sync.cloudfunctions.net')
 }
+
+  // Connectivity probe must ALWAYS hit the network (never cache),
+  // otherwise offline detection becomes unreliable in PWAs.
+  if (url.pathname === '/ping.txt') {
+    event.respondWith(
+      fetch(request).catch(
+        () => new Response('Offline', { status: 503, statusText: 'Offline' })
+      )
+    )
+    return
+  }
+
 
 const isExternal = (url, origin) => {
   return (
