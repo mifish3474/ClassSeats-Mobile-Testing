@@ -22,18 +22,6 @@ const isCloudFunction = (url) => {
   return url.includes('classseats-sync.cloudfunctions.net')
 }
 
-  // Connectivity probe must ALWAYS hit the network (never cache),
-  // otherwise offline detection becomes unreliable in PWAs.
-  if (url.pathname === '/ping.txt') {
-    event.respondWith(
-      fetch(request).catch(
-        () => new Response('Offline', { status: 503, statusText: 'Offline' })
-      )
-    )
-    return
-  }
-
-
 const isExternal = (url, origin) => {
   return (
     url.origin !== origin ||
@@ -75,6 +63,17 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url)
 
+  // Connectivity probe must ALWAYS hit the network (never cache),
+  // otherwise offline detection becomes unreliable in PWAs.
+  if (url.pathname === '/ping.txt') {
+    event.respondWith(
+      fetch(request).catch(
+        () => new Response('Offline', { status: 503, statusText: 'Offline' })
+      )
+    )
+    return
+  }
+
   // Never intercept Google auth/Drive calls, cloud functions, or any external domains.
   if (isExternal(url, self.location.origin)) {
     return
@@ -99,7 +98,9 @@ self.addEventListener('fetch', (event) => {
           (await caches.match(request)) ||
           (await caches.match('/index.html')) ||
           (await caches.match('./index.html'))
-        return cached || new Response('Offline', { status: 503, statusText: 'Offline' })
+        return (
+          cached || new Response('Offline', { status: 503, statusText: 'Offline' })
+        )
       })()
     )
     return
